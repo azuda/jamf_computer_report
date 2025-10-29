@@ -1,7 +1,14 @@
+# query_jamf.py
+
 from jamf_credential import JAMF_URL, get_token, invalidate_token
 import requests
 import urllib3
 import os
+
+"""
+- gets basic info about all computers in jamf
+- writes results to `data/response_computers.json`
+"""
 
 # ==================================================================================
 

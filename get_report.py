@@ -1,3 +1,5 @@
+# get_report.py
+
 from jamf_credential import JAMF_URL, get_token, invalidate_token
 import requests
 import urllib3
@@ -7,6 +9,13 @@ import csv
 from dateutil import parser
 import re
 import copy
+
+"""
+- parses response_computers.json
+- extracts `Rundle Device Report` extension attribute from each computer
+- cleans up column data for report
+- writes results to data/output.csv
+"""
 
 # ==================================================================================
 
