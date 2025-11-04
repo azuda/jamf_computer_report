@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+
+		<key>Label</key>
+		<string>com.devicereport.daemon</string>
+
+		<key>RunAtLoad</key>
+		<true/>
+
+		<!-- <key>StartInterval</key>
+		<integer>86400</integer> -->
+		<key>StartCalendarInterval</key>
+		<dict>
+			<key>Hour</key>
+			<integer>10</integer>
+			<key>Minute</key>
+			<integer>0</integer>
+		</dict>
+
+		<key>StandardErrorPath</key>
+		<string>/Users/atrac/Scripts/jamf_computer_report/stderr.log</string>
+
+		<key>StandardOutPath</key>
+		<string>/Users/atrac/Scripts/jamf_computer_report/stdout.log</string>
+
+		<key>EnvironmentVariables</key>
+		<dict>
+			<key>PATH</key>
+			<string><![CDATA[/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin]]></string>
+		</dict>
+
+		<key>WorkingDirectory</key>
+		<string>/Users/atrac/Scripts/jamf_computer_report/</string>
+
+		<key>ProgramArguments</key>
+		<array>
+			<string>/bin/bash</string>
+			<string>/Users/atrac/Scripts/jamf_computer_report/run.sh</string>
+		</array>
+
+	</dict>
+</plist>
