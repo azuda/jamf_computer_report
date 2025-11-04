@@ -13,7 +13,7 @@ scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/au
 credentials = ServiceAccountCredentials.from_json_keyfile_name("client_secret.json", scope)
 client = gspread.authorize(credentials)
 
-spreadsheet = client.open("Rundle Computer Report")
+spreadsheet = client.open("[csv2sheet] Rundle Computer Report")
 
 with open("data/output.csv", "r") as f:
   content = f.read()
