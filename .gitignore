@@ -6,3 +6,4 @@ logs/
 .env
 *.csv
 *.xlsx
+client_secret.json
