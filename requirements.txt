@@ -1,5 +1,5 @@
 dotenv==0.9.9
 requests==2.32.5
 python-dateutil==2.9.0
-pandas==2.3.3
-csv2notion==0.3.9
+gspread==6.2.1
+oauth2client==4.1.3
