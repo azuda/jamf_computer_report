@@ -130,6 +130,82 @@ def convert_time(timestamp):
 
 # ==================================================================================
 
+def _get_date(parsed, computer):
+  if parsed and parsed.get("DATE"):
+    try:
+      return convert_time(parsed["DATE"])
+    except:
+      try:
+        return convert_time(parsed.get("--- RUNDLE DEVICE REPORT ---"))
+      except:
+        return parsed.get("DATE")
+  # fallback to last checkin date
+  try:
+    return convert_time(computer["report_date_utc"])
+  except:
+    try:
+      return computer["report_date_utc"].split(".")[0]
+    except:
+      return None
+
+def _get_name(parsed, computer):
+  return (parsed.get("NAME") if parsed else None) or computer.get("name")
+
+def _get_sn(parsed, computer):
+  return (parsed.get("SN") if parsed else None) or computer.get("serial_number")
+
+def _get_os(parsed, computer):
+  return parsed.get("OS") if parsed else None
+
+def _get_logged_in_user(parsed, computer):
+  return (parsed.get("LOGGED_IN_USER") if parsed else None) or computer.get("username")
+
+def _get_uptime(parsed, computer):
+  # assume parsed uptime is normalized (int hours) if present
+  if parsed and parsed.get("UPTIME") is not None:
+    return parsed.get("UPTIME")
+  return None
+
+def _get_filevault(parsed, computer):
+  if parsed and parsed.get("FILEVAULT") is not None:
+    return parsed.get("FILEVAULT")
+  return None
+
+def _get_jamf_manage(parsed, computer):
+  return parsed.get("JAMF_MANAGE") if parsed else None
+
+def _get_cloudflare_status(parsed, computer):
+  return parsed.get("CLOUDFLARE_STATUS") if parsed else None
+
+def _get_cloudflare_org(parsed, computer):
+  return parsed.get("CLOUDFLARE_ORG") if parsed else None
+
+def _get_department(parsed, computer):
+  full = (parsed.get("DEPT") if parsed else None) or computer.get("department")
+  if re.search(r'(?i)\bStudent\b', full):
+    return "Student"
+  elif re.search(r'(?i)\b(?:Staff|Teacher|Admin|Childcare)\b', full):
+    return "Staff"
+  else:
+    return full
+
+# add or modify columns here to be included in the final report
+COLUMNS = [
+  {"header": "DATE", "func": _get_date},
+  {"header": "NAME", "func": _get_name},
+  {"header": "SN", "func": _get_sn},
+  {"header": "OS", "func": _get_os},
+  {"header": "LOGGED_IN_USER", "func": _get_logged_in_user},
+  {"header": "DEPT", "func": _get_department},
+  {"header": "UPTIME", "func": _get_uptime},
+  {"header": "FILEVAULT", "func": _get_filevault},
+  {"header": "JAMF_MANAGE", "func": _get_jamf_manage},
+  {"header": "CLOUDFLARE_STATUS", "func": _get_cloudflare_status},
+  {"header": "CLOUDFLARE_ORG", "func": _get_cloudflare_org},
+]
+
+# ==================================================================================
+
 def main():
   # init jamf api access token
   access_token, expires_in = get_token()
@@ -139,7 +215,7 @@ def main():
     computers = json.load(f)["computers"]
 
   raw = []
-  report = []
+  entries = []
   count = 50
 
   for computer in computers:
@@ -150,22 +226,19 @@ def main():
     response, access_token, token_expiration_epoch = get_extension_attributes(computer["id"], access_token, token_expiration_epoch)
     line = report_to_json(parse_response(response))
     raw.append(copy.deepcopy(line))
+
     if line:
       try:
         line["DATE"] = convert_time(line["DATE"])
       except:
         print(f"BAD REPORT: {line}")
-        line["DATE"] = convert_time(line["--- RUNDLE DEVICE REPORT ---"])
-
-      # clean command outputs and add to final report
-      report.append(clean_outputs(line))
+      # clean command outputs and add to entries
+      cleaned = clean_outputs(line)
+      entries.append({"parsed": cleaned, "computer": computer})
     else:
       print(f"BAD LINE: {line}")
-      try:
-        computer_date = convert_time(computer["report_date_utc"])
-      except:
-        computer_date = computer["report_date_utc"].split(".")[0]
-      report.append({"DATE": computer_date, "NAME": computer["name"], "SN": computer["serial_number"], "OS": None, "LOGGED_IN_USER": computer["username"], "UPTIME": None, "FILEVAULT": None, "JAMF_MANAGE": None, "CLOUDFLARE_STATUS": None, "CLOUDFLARE_ORG": None})
+      entries.append({"parsed": None, "computer": computer})
+
 
   # kill jamf api access token
   invalidate_token(access_token)
@@ -174,12 +247,23 @@ def main():
   with open("data/raw.json", "w") as f:
     json.dump(raw, f)
 
-  # write final report to csv
-  with open("data/output.csv", "w") as f:
+  # write entries to csv
+  with open("data/output.csv", "w", newline='') as f:
     writer = csv.writer(f)
-    writer.writerow(["DATE", "NAME", "SN", "OS", "LOGGED_IN_USER", "UPTIME", "FILEVAULT", "JAMF_MANAGE", "CLOUDFLARE_STATUS", "CLOUDFLARE_ORG"])
-    for row in report:
-      writer.writerow(row.values())
+    headers = [col["header"] for col in COLUMNS]
+    writer.writerow(headers)
+    for entry in entries:
+      parsed = entry["parsed"]
+      computer = entry["computer"]
+      row = []
+      for col in COLUMNS:
+        try:
+          val = col["func"](parsed, computer)
+        except Exception:
+          val = None
+        # normalize None -> empty cell, keep numeric and string values as-is
+        row.append("" if val is None else val)
+      writer.writerow(row)
 
   print("Done")
 
