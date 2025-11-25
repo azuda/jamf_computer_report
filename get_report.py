@@ -17,6 +17,12 @@ import copy
 - writes results to data/output.csv
 """
 
+TESTING = False
+LIMIT = 100
+
+with open("data/response_computers.json") as f:
+  DATA = json.load(f)
+
 # ==================================================================================
 
 def get_extension_attributes(computer_id, access_token, token_expiration_epoch):
@@ -42,7 +48,7 @@ def get_extension_attributes(computer_id, access_token, token_expiration_epoch):
 
   # resolve response
   if response and response.status_code == 200:
-    print(f"Success: got extension attributes for computer {computer_id}")
+    print(f"Success: got extension attributes for computer {computer_id} / {DATA['max_id']}")
     return response.json(), access_token, token_expiration_epoch
   else:
     print(f"Fail: status {response.status_code}: {response.text}")
@@ -189,6 +195,15 @@ def _get_department(parsed, computer):
   else:
     return full
 
+def _get_position(parsed, computer):
+  full = (parsed.get("EGY") if parsed else None) or computer.get("position")
+  if not full:
+    return None
+  m = re.search(r'(EGY)(\d{4})', full, re.IGNORECASE)
+  if m:
+    return int(m.group(2))
+  return full
+
 # add or modify columns here to be included in the final report
 COLUMNS = [
   {"header": "DATE", "func": _get_date},
@@ -197,6 +212,7 @@ COLUMNS = [
   {"header": "OS", "func": _get_os},
   {"header": "LOGGED_IN_USER", "func": _get_logged_in_user},
   {"header": "DEPT", "func": _get_department},
+  {"header": "EGY", "func": _get_position},
   {"header": "UPTIME", "func": _get_uptime},
   {"header": "FILEVAULT", "func": _get_filevault},
   {"header": "JAMF_MANAGE", "func": _get_jamf_manage},
@@ -211,17 +227,17 @@ def main():
   access_token, expires_in = get_token()
   token_expiration_epoch = int(time.time()) + expires_in
 
-  with open("data/response_computers.json") as f:
-    computers = json.load(f)["computers"]
+  computers = DATA["computers"]
 
   raw = []
   entries = []
-  count = 50
+  count = LIMIT
 
   for computer in computers:
-    # count -= 1
-    # if count <= 0:
-    #   break
+    if TESTING:
+      count -= 1
+      if count <= 0:
+        break
 
     response, access_token, token_expiration_epoch = get_extension_attributes(computer["id"], access_token, token_expiration_epoch)
     line = report_to_json(parse_response(response))
