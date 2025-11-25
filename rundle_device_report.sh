@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# THIS SCRIPT IS TO BE RUN VIA JAMF POLICY
+
 # define base dir
 REPORT_BASE_DIR="/Users/rundleadmin/Library/Application Support/rundle_device_report"
 
