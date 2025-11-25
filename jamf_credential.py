@@ -4,6 +4,7 @@
 from dotenv import load_dotenv
 import os
 import requests
+import time
 
 # source .env
 load_dotenv()
@@ -33,3 +34,12 @@ def invalidate_token(token):
     print("Token already invalid")
   else:
     print("An unknown error occurred invalidating the token")
+
+# auto renew token if it expires in < 15 secs
+def check_token_expiration(access_token, token_expiration_epoch):
+  current_epoch = int(time.time())  
+  if current_epoch > token_expiration_epoch - 15:
+    access_token, expires_in = get_token()
+    token_expiration_epoch = current_epoch + expires_in
+    print(f"Token valid for {expires_in} seconds")
+  return access_token, token_expiration_epoch
