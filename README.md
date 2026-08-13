@@ -17,7 +17,9 @@ pipeline — they run on the managed Macs via Jamf policy.
 
 ## Required secrets (not in git)
 
-- `.env` — Jamf API credentials (see `jamf_credential.py`)
+- Jamf API credentials — loaded from `../jamf_client/.env` (see the
+  [`jamf_client`](../jamf_client) repo), not a local `.env`
+- `.env` — `NOTION_API_KEY` and any other script-local settings
 - `client_secret.json` — Google service account key
 
 Encrypted copies (`*.gpg`) are in the repo; decrypt with `gpg` or copy the
@@ -30,6 +32,9 @@ python3 -m venv .venv
 # macOS:   .venv/bin/pip install -r requirements.txt
 # Windows: .venv\Scripts\pip install -r requirements.txt
 ```
+
+`requirements.txt` installs `jamf_client` in editable mode from `../jamf_client`,
+so that repo must be checked out as a sibling of this one.
 
 Run manually with `./run.sh` (macOS) or `.\run.ps1` (Windows), or directly:
 `.venv/bin/python3 main.py`. All scripts use paths relative to the project

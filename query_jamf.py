@@ -6,41 +6,27 @@
 - write result dicts to `data/response_computers.json` and `data/response_devices.json`
 """
 
-from jamf_credential import JAMF_URL, check_token_expiration, get_token, invalidate_token
+import jamf_client
+from jamf_client import jamf_session, jamf_get
 import json
 import os
-import requests
-import time
 
 # ==================================================================================
 
-def get(endpoint, access_token, token_expiration_epoch):
-  access_token, token_expiration_epoch = check_token_expiration(access_token, token_expiration_epoch)
-
-  url = f"{JAMF_URL}{endpoint}"
-  headers = {
-    "accept": "application/json",
-    "authorization": f"Bearer {access_token}"
-  }
-  response = requests.get(url, headers=headers, timeout=30)
-  response.raise_for_status()
-  return response, access_token, token_expiration_epoch
-
-def get_all_pages(endpoint, access_token, token_expiration_epoch, page_size=2000):
+def get_all_pages(endpoint, token, session, page_size=2000):
   # accumulate every page of a paginated /api/v2 endpoint so the report
   # doesn't silently truncate once inventory grows past one page
   results = []
   page = 0
   while True:
-    response, access_token, token_expiration_epoch = get(
-      f"{endpoint}&page={page}&page-size={page_size}", access_token, token_expiration_epoch)
+    response = jamf_get(f"{endpoint}&page={page}&page-size={page_size}", token, session)
     body = response.json()
     page_results = body.get("results", [])
     results.extend(page_results)
     if len(results) >= body.get("totalCount", 0) or not page_results:
       break
     page += 1
-  return {"totalCount": body.get("totalCount", 0), "results": results}, access_token, token_expiration_epoch
+  return {"totalCount": body.get("totalCount", 0), "results": results}
 
 def combine_computers(computers_response, computers_users, computers_purchasing, computers_extension_attributes):
   computers_json = {}
@@ -101,38 +87,30 @@ def combine_devices(devices_response, devices_users, devices_general, devices_pu
 # ==================================================================================
 
 def main():
-  # create jamf access token
-  access_token, expires_in = get_token()
-  token_expiration_epoch = int(time.time()) + expires_in
-  print(f"Token valid for {expires_in} seconds")
+  jamf_client.init()
 
-  # print jamf pro version
-  version_url = f"{JAMF_URL}/api/v1/jamf-pro-version"
-  headers = {"Authorization": f"Bearer {access_token}"}
-  version = requests.get(version_url, headers=headers, timeout=30)
-  version.raise_for_status()
-  print("Jamf Pro version:", version.json()["version"])
+  with jamf_session() as (token, session):
+    # print jamf pro version
+    version = jamf_get("/api/v1/jamf-pro-version", token, session)
+    print("Jamf Pro version:", version.json()["version"])
 
-  # get info for all computers
-  # https://developer.jamf.com/jamf-pro/reference/findcomputersbasic
-  # https://developer.jamf.com/jamf-pro/reference/get_v2-computers-inventory
-  computers, access_token, token_expiration_epoch  = get("/JSSResource/computers/subset/basic", access_token, token_expiration_epoch)
-  computers_users, access_token, token_expiration_epoch  = get_all_pages("/api/v2/computers-inventory?section=USER_AND_LOCATION&sort=id%3Aasc", access_token, token_expiration_epoch)
-  computers_purchasing, access_token, token_expiration_epoch = get_all_pages("/api/v2/computers-inventory?section=PURCHASING&sort=id%3Aasc", access_token, token_expiration_epoch)
-  computers_extension_attributes, access_token, token_expiration_epoch = get_all_pages("/api/v2/computers-inventory?section=EXTENSION_ATTRIBUTES&sort=id%3Aasc", access_token, token_expiration_epoch)
-  computers_json = combine_computers(computers, computers_users, computers_purchasing, computers_extension_attributes)
+    # get info for all computers
+    # https://developer.jamf.com/jamf-pro/reference/findcomputersbasic
+    # https://developer.jamf.com/jamf-pro/reference/get_v2-computers-inventory
+    computers = jamf_get("/JSSResource/computers/subset/basic", token, session)
+    computers_users = get_all_pages("/api/v2/computers-inventory?section=USER_AND_LOCATION&sort=id%3Aasc", token, session)
+    computers_purchasing = get_all_pages("/api/v2/computers-inventory?section=PURCHASING&sort=id%3Aasc", token, session)
+    computers_extension_attributes = get_all_pages("/api/v2/computers-inventory?section=EXTENSION_ATTRIBUTES&sort=id%3Aasc", token, session)
+    computers_json = combine_computers(computers, computers_users, computers_purchasing, computers_extension_attributes)
 
-  # get info for all mobile devices
-  # https://developer.jamf.com/jamf-pro/reference/findmobiledevices
-  # https://developer.jamf.com/jamf-pro/reference/get_v2-mobile-devices-detail
-  devices, access_token, token_expiration_epoch = get("/JSSResource/mobiledevices", access_token, token_expiration_epoch)
-  devices_users, access_token, token_expiration_epoch = get_all_pages("/api/v2/mobile-devices/detail?section=USER_AND_LOCATION&sort=deviceId%3Aasc", access_token, token_expiration_epoch)
-  devices_general, access_token, token_expiration_epoch = get_all_pages("/api/v2/mobile-devices/detail?section=GENERAL&sort=deviceId%3Aasc", access_token, token_expiration_epoch)
-  devices_purchasing, access_token, token_expiration_epoch = get_all_pages("/api/v2/mobile-devices/detail?section=PURCHASING&sort=deviceId%3Aasc", access_token, token_expiration_epoch)
-  devices_json = combine_devices(devices, devices_users, devices_general, devices_purchasing)
-
-  # kill jamf access token
-  invalidate_token(access_token)
+    # get info for all mobile devices
+    # https://developer.jamf.com/jamf-pro/reference/findmobiledevices
+    # https://developer.jamf.com/jamf-pro/reference/get_v2-mobile-devices-detail
+    devices = jamf_get("/JSSResource/mobiledevices", token, session)
+    devices_users = get_all_pages("/api/v2/mobile-devices/detail?section=USER_AND_LOCATION&sort=deviceId%3Aasc", token, session)
+    devices_general = get_all_pages("/api/v2/mobile-devices/detail?section=GENERAL&sort=deviceId%3Aasc", token, session)
+    devices_purchasing = get_all_pages("/api/v2/mobile-devices/detail?section=PURCHASING&sort=deviceId%3Aasc", token, session)
+    devices_json = combine_devices(devices, devices_users, devices_general, devices_purchasing)
 
   # raw api responses for debug
   if not os.path.exists("debug"):
