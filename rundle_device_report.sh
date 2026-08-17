@@ -3,7 +3,7 @@
 # THIS SCRIPT IS TO BE RUN VIA JAMF POLICY
 
 # define base dir
-REPORT_BASE_DIR="/Users/rundleadmin/Library/Application Support/rundle_device_report"
+REPORT_BASE_DIR="/Library/Application Support/rundle_device_report"
 
 # create report dir if it doesnt exist
 if ! mkdir -p "${REPORT_BASE_DIR}"; then
