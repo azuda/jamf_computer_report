@@ -62,16 +62,16 @@ def clean_outputs(computer):
   if not report: # if no report found set uptime to -1
     report["UPTIME"] = -1
 
-  # filevault
-  try:
-    fv = report["FILEVAULT"].split("]")[-1].strip()
-    try:
-      report["FILEVAULT"] = fv.split(" ")[3].strip()
-    except IndexError:
-      report["FILEVAULT"] = fv
-  except (KeyError, AttributeError) as e:
-    if "FILEVAULT" in report:
-      print(f"warn: could not parse filevault for {computer.get('name')}: {e}")
+  # # filevault
+  # try:
+  #   fv = report["FILEVAULT"].split("]")[-1].strip()
+  #   try:
+  #     report["FILEVAULT"] = fv.split(" ")[3].strip()
+  #   except IndexError:
+  #     report["FILEVAULT"] = fv
+  # except (KeyError, AttributeError) as e:
+  #   if "FILEVAULT" in report:
+  #     print(f"warn: could not parse filevault for {computer.get('name')}: {e}")
 
   # update by reference
   computer["report_dict"] = report
@@ -107,9 +107,9 @@ def _get_uptime(computer):
     return report.get("UPTIME")
   return None
 
-def _get_filevault(computer):
-  report = computer.get("report_dict")
-  return report.get("FILEVAULT") if report else None
+# def _get_filevault(computer):
+#   report = computer.get("report_dict")
+#   return report.get("FILEVAULT") if report else None
 
 # def _get_jamf_manage(computer):
 #   report = computer.get("report_dict")
@@ -137,7 +137,7 @@ COLUMNS = [
   {"header": "PURCHASE_PRICE", "func": _get_purchase_price},
   {"header": "PURCHASE_DATE", "func": _get_purchase_date},
   {"header": "UPTIME", "func": _get_uptime},
-  {"header": "FILEVAULT", "func": _get_filevault},
+  # {"header": "FILEVAULT", "func": _get_filevault},
   # {"header": "JAMF_MANAGE", "func": _get_jamf_manage},
   {"header": "CLOUDFLARE_STATUS", "func": _get_cloudflare_status},
   {"header": "CLOUDFLARE_ORG", "func": _get_cloudflare_org},
