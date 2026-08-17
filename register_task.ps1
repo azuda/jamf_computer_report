@@ -15,9 +15,9 @@ $Trigger = New-ScheduledTaskTrigger -Daily -At 10:00
 $Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable `
   -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 
-Register-ScheduledTask -TaskName "RundleJamfReport" -TaskPath "\Rundle\" `
+Register-ScheduledTask -TaskName "Jamf Inventory Report" -TaskPath "\Rundle\" `
   -Action $Action -Trigger $Trigger -Settings $Settings `
   -Description "Daily Jamf device report to Google Sheets" -Force
 
-Write-Host "Task 'RundleJamfReport' registered under \Rundle\. Test it with:"
-Write-Host "  Start-ScheduledTask -TaskName RundleJamfReport -TaskPath \Rundle\"
+Write-Host "Task 'Jamf Inventory Report' registered under \Rundle\. Test it with:"
+Write-Host "  Start-ScheduledTask -TaskName Jamf Inventory Report -TaskPath \Rundle\"
