@@ -52,9 +52,9 @@ system_profiler SPSoftwareDataType -detailLevel mini | grep "Time since boot" >>
 echo "" >> "${REPORT_FILE}"
 
 # secureTokenStatus
-echo "FILEVAULT" >> "${REPORT_FILE}"
-sysadminctl -secureTokenStatus rundleadmin >> "${REPORT_FILE}" 2>&1
-echo "" >> "${REPORT_FILE}"
+# echo "FILEVAULT" >> "${REPORT_FILE}"
+# sysadminctl -secureTokenStatus rundleadmin >> "${REPORT_FILE}" 2>&1
+# echo "" >> "${REPORT_FILE}"
 
 # jamf manage
 echo "JAMF_MANAGE" >> "${REPORT_FILE}"
