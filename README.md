@@ -60,13 +60,14 @@ From an elevated PowerShell prompt in the project folder:
 powershell -ExecutionPolicy Bypass -File register_task.ps1
 ```
 
-This registers a daily 10:00 task named **RundleJamfReport** that runs
-`run.ps1`, which appends all output to `logs\report.log`. Missed runs (server
-off/asleep at 10:00) start as soon as it's back up.
+This registers a daily 10:00 task named **RundleJamfReport** under the
+`\Rundle\` Task Scheduler folder, that runs `run.ps1`, which appends all
+output to `logs\report.log`. Missed runs (server off/asleep at 10:00) start
+as soon as it's back up.
 
-To run while no one is logged in: Task Scheduler GUI → RundleJamfReport →
-Properties → "Run whether user is logged on or not" (stores the account
-password with the task).
+To run while no one is logged in: Task Scheduler GUI → Task Scheduler
+Library → Rundle → RundleJamfReport → Properties → "Run whether user is
+logged on or not" (stores the account password with the task).
 
-Test with: `Start-ScheduledTask -TaskName RundleJamfReport`, then check
-`logs\report.log`.
+Test with: `Start-ScheduledTask -TaskName RundleJamfReport -TaskPath \Rundle\`,
+then check `logs\report.log`.
