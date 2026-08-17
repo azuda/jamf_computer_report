@@ -20,4 +20,4 @@ Register-ScheduledTask -TaskName "Jamf Inventory Report" -TaskPath "\Rundle\" `
   -Description "Daily Jamf device report to Google Sheets" -Force
 
 Write-Host "Task 'Jamf Inventory Report' registered under \Rundle\. Test it with:"
-Write-Host "  Start-ScheduledTask -TaskName Jamf Inventory Report -TaskPath \Rundle\"
+Write-Host "  Start-ScheduledTask -TaskName 'Jamf Inventory Report' -TaskPath \Rundle\"
